@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEO Salvador Shopping — Gestão de Atendimento</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #2d6a4f;
+    --verde-med: #40916c;
+    --verde-claro: #74c69d;
+    --verde-bg: #d8f3dc;
+    --verde-pale: #f0faf2;
+    --amarelo: #e9c46a;
+    --amarelo-bg: #fdf3d0;
+    --vermelho: #c1121f;
+    --vermelho-bg: #fde8e9;
+    --cinza: #6b7280;
+    --cinza-bg: #f3f4f6;
+    --branco: #ffffff;
+    --texto: #1a2e1e;
+    --texto-med: #3d5a45;
+    --texto-leve: #6b8f72;
+    --borda: #c8e6cd;
+    --sombra: rgba(45,106,79,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: #f4f7f5;
+    color: var(--texto);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--verde);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    border-bottom: 3px solid var(--verde-claro);
+  }
+  .header-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,.55);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  .header-clock {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--verde-claro);
+    letter-spacing: .12em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: var(--branco);
+    border-bottom: 1px solid var(--borda);
+    padding: 0 2rem;
+    gap: 0;
+  }
+  .tab {
+    padding: 14px 22px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    color: var(--cinza);
+    transition: all .2s;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+  }
+  .tab:hover { color: var(--verde-med); }
+  .tab.active { color: var(--verde); border-bottom-color: var(--verde); }
+
+  /* CONTEÚDO */
+  .content { padding: 1.5rem 2rem; max-width: 1200px; margin: 0 auto; }
+
+  /* CARDS DE GUICHÊ */
+  .guiches-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .gcard {
+    background: var(--branco);
+    border: 1.5px solid var(--borda);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all .25s;
+  }
+  .gcard.status-livre { border-color: var(--borda); }
+  .gcard.status-ativa { border-color: var(--verde-med); background: var(--verde-pale); }
+  .gcard.status-atendendo { border-color: var(--verde); background: var(--verde-pale); }
+  .gcard.status-ausente { border-color: var(--amarelo); background: var(--amarelo-bg); }
+
+  .gc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .gc-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--texto-leve);
+  }
+  .gc-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .badge-livre { background: var(--cinza-bg); color: var(--cinza); }
+  .badge-ativa { background: var(--verde-bg); color: var(--verde); }
+  .badge-atendendo { background: var(--verde); color: #fff; }
+  .badge-ausente { background: var(--amarelo-bg); color: #856404; border: 1px solid var(--amarelo); }
+
+  .gc-nome {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--texto);
+    margin-bottom: 2px;
+    min-height: 26px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: .02em;
+  }
+  .gc-info { font-size: 12px; color: var(--texto-leve); margin-bottom: 10px; min-height: 16px; font-variant-numeric: tabular-nums; }
+  .gc-stats { display: flex; gap: 12px; margin-bottom: 12px; }
+  .gc-stat { font-size: 11px; color: var(--texto-leve); }
+  .gc-stat strong { font-size: 15px; font-weight: 600; color: var(--texto); display: block; font-variant-numeric: tabular-nums; }
+
+  .gc-input {
+    width: 100%;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: 'Barlow', sans-serif;
+    color: var(--texto);
+    background: #fff;
+    margin-bottom: 8px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .gc-input:focus { border-color: var(--verde-med); }
+  .gc-input::placeholder { color: #aaa; }
+
+  .gc-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    border: 1.5px solid var(--borda);
+    border-radius: 8px;
+    background: #fff;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    transition: all .18s;
+    color: var(--texto);
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: scale(.97); }
+  .btn-verde { background: var(--verde); border-color: var(--verde); color: #fff; }
+  .btn-verde:hover { background: var(--verde-med); }
+  .btn-outline-verde { border-color: var(--verde-med); color: var(--verde); }
+  .btn-amarelo { background: var(--amarelo-bg); border-color: var(--amarelo); color: #856404; }
+  .btn-vermelho { background: var(--vermelho-bg); border-color: var(--vermelho); color: var(--vermelho); }
+  .btn-cinza { background: var(--cinza-bg); border-color: #d1d5db; color: var(--cinza); }
+
+  /* STATS TOP */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+  }
+  .stat-card .sv { font-size: 28px; font-weight: 600; color: var(--texto); font-variant-numeric: tabular-nums; font-family: 'Barlow Condensed', sans-serif; }
+  .stat-card .sl { font-size: 12px; color: var(--texto-leve); text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+  /* MONITOR */
+  .monitor-wrap {
+    background: #0a1a0f;
+    border-radius: 16px;
+    padding: 2rem;
+    min-height: 420px;
+  }
+  .mon-header { text-align: center; margin-bottom: 2rem; }
+  .mon-logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(116,198,157,.5);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .mon-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .mon-sub { font-size: 14px; color: rgba(255,255,255,.35); margin-top: 6px; letter-spacing: .06em; }
+  .mon-clock-big {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    color: var(--verde-claro);
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .1em;
+  }
+
+  .mon-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .mc {
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    transition: all .5s;
+    position: relative;
+    overflow: hidden;
+  }
+  .mc.livre { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+  .mc.ativa { background: rgba(45,106,79,.2); border: 1.5px solid rgba(64,145,108,.5); }
+  .mc.atendendo { background: rgba(45,106,79,.3); border: 1.5px solid rgba(116,198,157,.6); }
+  .mc.ausente { background: rgba(233,196,106,.08); border: 1.5px solid rgba(233,196,106,.3); }
+
+  .mc-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .mc.livre .mc-num { color: rgba(255,255,255,.2); }
+  .mc.ativa .mc-num, .mc.atendendo .mc-num { color: rgba(116,198,157,.7); }
+  .mc.ausente .mc-num { color: rgba(233,196,106,.6); }
+
+  .mc-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+  }
+  .mc.livre .mc-indicator { background: rgba(255,255,255,.12); }
+  .mc.ativa .mc-indicator { background: var(--verde-claro); animation: pulse 2s infinite; }
+  .mc.atendendo .mc-indicator { background: var(--verde-claro); }
+  .mc.ausente .mc-indicator { background: var(--amarelo); animation: pulse 1.5s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+
+  .mc-nome {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    min-height: 22px;
+    letter-spacing: .02em;
+  }
+  .mc.livre .mc-nome { color: rgba(255,255,255,.2); }
+  .mc.ativa .mc-nome, .mc.atendendo .mc-nome { color: #fff; }
+  .mc.ausente .mc-nome { color: rgba(233,196,106,.9); }
+
+  .mc-status {
+    font-size: 12px;
+    margin-top: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .mc.livre .mc-status { color: rgba(255,255,255,.18); }
+  .mc.ativa .mc-status { color: rgba(116,198,157,.8); }
+  .mc.atendendo .mc-status { color: var(--verde-claro); }
+  .mc.ausente .mc-status { color: rgba(233,196,106,.7); }
+
+  .mon-rodape {
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding-top: 1rem;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,.2);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  /* GESTOR */
+  .gtable-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+  .gtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--branco);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--borda);
+  }
+  .gtable th {
+    background: var(--verde-pale);
+    color: var(--verde);
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--borda);
+  }
+  .gtable td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--borda);
+    color: var(--texto);
+    font-variant-numeric: tabular-nums;
+  }
+  .gtable tr:last-child td { border-bottom: none; }
+  .gtable tbody tr:hover td { background: var(--verde-pale); }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-bg { flex: 1; height: 6px; background: var(--cinza-bg); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 6px; background: var(--verde-med); border-radius: 3px; transition: width .5s; }
+
+  /* LOG */
+  .log-box {
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    padding: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .log-item {
+    font-size: 12px;
+    color: var(--texto-med);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--borda);
+    display: flex;
+    gap: 8px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-ts { font-size: 11px; color: var(--texto-leve); white-space: nowrap; font-variant-numeric: tabular-nums; font-family: 'Barlow Condensed', sans-serif; }
+
+  /* RELATORIO */
+  .rel-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .rel-controls select {
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: 'Barlow', sans-serif;
+    color: var(--texto);
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+  }
+  .rtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+  .rtable th {
+    background: var(--verde-pale);
+    color: var(--verde);
+    padding: 9px 14px;
+    text-align: left;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--borda);
+  }
+  .rtable td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--borda);
+    color: var(--texto);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .rtable tr:last-child td { border-bottom: none; }
+  .rtable tbody tr:hover td { background: var(--verde-pale); }
+
+  .sec-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--verde);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+
+  /* STATUS FIREBASE */
+  .fb-status {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: var(--branco);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-family: 'Barlow Condensed', sans-serif;
+    color: var(--texto-leve);
+    letter-spacing: .05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 999;
+    box-shadow: 0 2px 8px var(--sombra);
+  }
+  .fb-dot { width: 7px; height: 7px; border-radius: 50%; background: #aaa; }
+  .fb-dot.ok { background: var(--verde-claro); }
+  .fb-dot.err { background: var(--vermelho); }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 2rem; color: var(--texto-leve); font-size: 13px; }
+
+  /* LOADING */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: #0a1a0f;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999;
+    transition: opacity .5s;
+  }
+  .loading-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--verde-claro);
+    letter-spacing: .15em;
+    margin-bottom: 8px;
+  }
+  .loading-sub { font-size: 13px; color: rgba(255,255,255,.35); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 32px; }
+  .loading-bar { width: 200px; height: 3px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+  .loading-bar-fill { height: 100%; width: 0; background: var(--verde-claro); border-radius: 2px; animation: load 1.5s ease forwards; }
+  @keyframes load { to { width: 100%; } }
+
+  @media (max-width: 700px) {
+    .guiches-grid, .mon-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .content { padding: 1rem; }
+    .header-clock { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="loading-logo">CEO</div>
+  <div class="loading-sub">Salvador Shopping · Gestão de Atendimento</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div class="header">
+  <div>
+    <div class="header-title">CEO Salvador Shopping</div>
+    <div class="header-sub">Corporate Executive Offices · Gestão de Atendimento</div>
+  </div>
+  <div class="header-clock" id="header-clock">--:--:--</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('checkin',this)">Check-in / Guichês</div>
+  <div class="tab" onclick="showTab('monitor',this)">Monitor (TV)</div>
+  <div class="tab" onclick="showTab('gestor',this)">Gestor</div>
+  <div class="tab" onclick="showTab('relatorio',this)">Relatório</div>
+</div>
+
+<!-- CHECK-IN -->
+<div id="tab-checkin" class="content">
+  <div class="stats-row" id="stats-row"></div>
+  <div class="guiches-grid" id="checkin-grid"></div>
+</div>
+
+<!-- MONITOR -->
+<div id="tab-monitor" class="content" style="display:none">
+  <div class="monitor-wrap">
+    <div class="mon-header">
+      <div class="mon-logo-text">CEO Salvador Shopping</div>
+      <div class="mon-title">Atendimento</div>
+      <div class="mon-sub">Dirija-se ao guichê disponível</div>
+      <div class="mon-clock-big" id="mon-clock">--:--:--</div>
+    </div>
+    <div class="mon-grid" id="mon-grid"></div>
+    <div class="mon-rodape">Corporate Executive Offices · CEO Salvador Shopping</div>
+  </div>
+</div>
+
+<!-- GESTOR -->
+<div id="tab-gestor" class="content" style="display:none">
+  <div class="stats-row" id="gestor-stats-row"></div>
+  <div class="sec-title">Desempenho por guichê — hoje</div>
+  <div class="gtable-wrap"><table class="gtable" id="gestor-table"></table></div>
+  <div class="sec-title">Eventos recentes</div>
+  <div class="log-box" id="log-box"></div>
+</div>
+
+<!-- RELATÓRIO -->
+<div id="tab-relatorio" class="content" style="display:none">
+  <div class="rel-controls">
+    <select id="rel-g">
+      <option value="todos">Todos os guichês</option>
+      <option value="1">Guichê 1</option>
+      <option value="2">Guichê 2</option>
+      <option value="3">Guichê 3</option>
+      <option value="4">Guichê 4</option>
+      <option value="5">Guichê 5</option>
+      <option value="6">Guichê 6</option>
+    </select>
+    <select id="rel-t">
+      <option value="todos">Todos os turnos</option>
+      <option value="Manhã">Manhã (até 12h)</option>
+      <option value="Tarde">Tarde (12h+)</option>
+    </select>
+    <button class="btn btn-outline-verde" onclick="renderRelatorio()">Filtrar</button>
+    <div style="flex:1"></div>
+    <button class="btn btn-cinza" onclick="exportCSV()">↓ CSV</button>
+    <button class="btn btn-cinza" onclick="exportPDF()">↓ PDF</button>
+  </div>
+  <div class="sec-title">Resumo por atendente</div>
+  <div style="overflow-x:auto"><table class="rtable" id="rel-resumo"></table></div>
+  <div class="sec-title" style="margin-top:1.25rem">Histórico detalhado</div>
+  <div style="overflow-x:auto"><table class="rtable" id="rel-detalhe"></table></div>
+</div>
+
+<div class="fb-status" id="fb-status">
+  <div class="fb-dot" id="fb-dot"></div>
+  <span id="fb-txt">Conectando...</span>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAD8LmQHuPrSD0Dr6W1XMp8-8AFpHKgluM",
+  authDomain: "ceo-fila.firebaseapp.com",
+  databaseURL: "https://ceo-fila-default-rtdb.firebaseio.com",
+  projectId: "ceo-fila",
+  storageBucket: "ceo-fila.firebasestorage.app",
+  messagingSenderId: "463798623074",
+  appId: "1:463798623074:web:2913157a86887c78e0ea3b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ─── STATE ───────────────────────────────────────────────
+const TURNO = () => new Date().getHours() < 12 ? 'Manhã' : 'Tarde';
+const TS = () => new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const fmtSeg = s => {
+  if (!s || s <= 0) return '—';
+  const m = Math.floor(s/60), sg = Math.round(s%60);
+  return m > 0 ? `${m}m ${sg}s` : `${sg}s`;
+};
+
+let guiches = Array.from({length:6},(_,i) => ({
+  num: i+1,
+  status: 'livre',
+  nome: '',
+  checkinTs: null,
+  atendimentoStart: null,
+  ultimoFimAtendimento: null,
+  ausenciaStart: null,
+  totalAtendimentos: 0,
+  totalTempoAtend: 0,
+  totalOciosidade: 0,
+  totalAusencia: 0,
+}));
+
+let historico = [];
+let eventos = [];
+
+// ─── FIREBASE SYNC ───────────────────────────────────────
+function salvar() {
+  set(ref(db, 'guiches'), guiches.map(g => ({...g})));
+  set(ref(db, 'historico'), historico.length ? historico : []);
+  set(ref(db, 'eventos'), eventos.length ? eventos.slice(0,50) : []);
+}
+
+onValue(ref(db, '/'), snap => {
+  const data = snap.val();
+  if (!data) return;
+  if (data.guiches) {
+    guiches = data.guiches.map((g,i) => g || guiches[i]);
+  }
+  if (data.historico) historico = data.historico;
+  if (data.eventos) eventos = data.eventos;
+  render();
+  document.getElementById('fb-dot').className = 'fb-dot ok';
+  document.getElementById('fb-txt').textContent = 'Sincronizado';
+}, err => {
+  document.getElementById('fb-dot').className = 'fb-dot err';
+  document.getElementById('fb-txt').textContent = 'Erro de conexão';
+});
+
+// ─── AÇÕES ───────────────────────────────────────────────
+window.checkin = function(i) {
+  const nome = document.getElementById('inp-'+i).value.trim();
+  if (!nome) { document.getElementById('inp-'+i).focus(); return; }
+  guiches[i].nome = nome;
+  guiches[i].status = 'ativa';
+  guiches[i].checkinTs = Date.now();
+  guiches[i].ultimoFimAtendimento = Date.now();
+  addEvento(`${nome} fez check-in no Guichê ${i+1}`);
+  salvar();
+};
+
+window.iniciarAtend = function(i) {
+  const g = guiches[i];
+  if (g.status !== 'ativa') return;
+  const agr = Date.now();
+  if (g.ultimoFimAtendimento) {
+    g.totalOciosidade += Math.round((agr - g.ultimoFimAtendimento) / 1000);
+  }
+  g.atendimentoStart = agr;
+  g.status = 'atendendo';
+  addEvento(`${g.nome} (G${i+1}) iniciou atendimento`);
+  salvar();
+};
+
+window.finalizarAtend = function(i) {
+  const g = guiches[i];
+  if (g.status !== 'atendendo') return;
+  const agr = Date.now();
+  const dur = Math.round((agr - g.atendimentoStart) / 1000);
+  g.totalTempoAtend += dur;
+  g.totalAtendimentos++;
+  g.ultimoFimAtendimento = agr;
+  g.atendimentoStart = null;
+  g.status = 'ativa';
+  historico.push({
+    guiche: g.num,
+    nome: g.nome,
+    turno: TURNO(),
+    inicio: new Date(agr - dur*1000).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    fim: new Date(agr).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    duracao: dur,
+    ts: agr
+  });
+  addEvento(`${g.nome} (G${i+1}) finalizou — ${fmtSeg(dur)}`);
+  salvar();
+};
+
+window.toggleAusente = function(i) {
+  const g = guiches[i];
+  const agr = Date.now();
+  if (g.status === 'ausente') {
+    const dur = Math.round((agr - g.ausenciaStart) / 1000);
+    g.totalAusencia += dur;
+    g.ausenciaStart = null;
+    g.ultimoFimAtendimento = agr;
+    g.status = 'ativa';
+    addEvento(`${g.nome} (G${i+1}) voltou — ausência de ${fmtSeg(dur)}`);
+  } else if (g.status === 'ativa') {
+    g.status = 'ausente';
+    g.ausenciaStart = agr;
+    addEvento(`${g.nome} (G${i+1}) saiu (ausente)`);
+  }
+  salvar();
+};
+
+window.checkout = function(i) {
+  const g = guiches[i];
+  addEvento(`${g.nome} (G${i+1}) fez checkout`);
+  guiches[i] = {
+    num: i+1, status: 'livre', nome: '',
+    checkinTs: null, atendimentoStart: null,
+    ultimoFimAtendimento: null, ausenciaStart: null,
+    totalAtendimentos: 0, totalTempoAtend: 0,
+    totalOciosidade: 0, totalAusencia: 0,
+  };
+  salvar();
+};
+
+function addEvento(msg) {
+  eventos.unshift({ t: TS(), msg });
+  if (eventos.length > 60) eventos.pop();
+}
+
+// ─── RENDER ──────────────────────────────────────────────
+function renderCheckin() {
+  const now = Date.now();
+  const el = document.getElementById('checkin-grid');
+  if (!el) return;
+  el.innerHTML = guiches.map((g, i) => {
+    const isLivre = g.status === 'livre';
+    const isAtiva = g.status === 'ativa';
+    const isAtend = g.status === 'atendendo';
+    const isAus = g.status === 'ausente';
+    let timerTxt = '';
+    if (isAtend && g.atendimentoStart) timerTxt = 'Atendendo há ' + fmtSeg(Math.round((now - g.atendimentoStart)/1000));
+    else if (isAus && g.ausenciaStart) timerTxt = 'Ausente há ' + fmtSeg(Math.round((now - g.ausenciaStart)/1000));
+    else if ((isAtiva) && g.ultimoFimAtendimento) timerTxt = 'Ocioso há ' + fmtSeg(Math.round((now - g.ultimoFimAtendimento)/1000));
+    const badgeCls = isLivre?'badge-livre':isAtend?'badge-atendendo':isAus?'badge-ausente':'badge-ativa';
+    const badgeTxt = isLivre?'Livre':isAtend?'Atendendo':isAus?'Ausente':'Disponível';
+    const tmedio = g.totalAtendimentos > 0 ? fmtSeg(Math.round(g.totalTempoAtend/g.totalAtendimentos)) : '—';
+    return `<div class="gcard status-${isAtend?'atendendo':isAus?'ausente':isAtiva?'ativa':'livre'}">
+      <div class="gc-header">
+        <div class="gc-num">Guichê ${g.num}</div>
+        <span class="gc-badge ${badgeCls}">${badgeTxt}</span>
+      </div>
+      <div class="gc-nome">${g.nome || '—'}</div>
+      <div class="gc-info">${timerTxt}</div>
+      <div class="gc-stats">
+        <div class="gc-stat"><strong>${g.totalAtendimentos}</strong>atend. hoje</div>
+        <div class="gc-stat"><strong>${tmedio}</strong>tempo médio</div>
+        <div class="gc-stat"><strong>${fmtSeg(g.totalOciosidade)}</strong>ociosidade</div>
+      </div>
+      <div class="gc-btns">
+        ${isLivre ? `<input type="text" class="gc-input" id="inp-${i}" placeholder="Nome da funcionária" onkeydown="if(event.key==='Enter')checkin(${i})">
+          <button class="btn btn-verde" onclick="checkin(${i})">Check-in</button>` : ''}
+        ${isAtiva ? `<button class="btn btn-verde" onclick="iniciarAtend(${i})">Iniciar atend.</button>
+          <button class="btn btn-amarelo" onclick="toggleAusente(${i})">Ausente</button>
+          <button class="btn btn-vermelho" onclick="checkout(${i})">Checkout</button>` : ''}
+        ${isAtend ? `<button class="btn btn-verde" onclick="finalizarAtend(${i})">✓ Finalizar</button>` : ''}
+        ${isAus ? `<button class="btn btn-amarelo" onclick="toggleAusente(${i})">Voltei</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total = guiches.reduce((a,g)=>a+g.totalAtendimentos,0);
+  const ativos = guiches.filter(g=>g.status!=='livre').length;
+  const ausentes = guiches.filter(g=>g.status==='ausente').length;
+  const comAtend = guiches.filter(g=>g.totalAtendimentos>0);
+  const tmedio = comAtend.length ? fmtSeg(Math.round(comAtend.reduce((a,g)=>a+g.totalTempoAtend/g.totalAtendimentos,0)/comAtend.length)) : '—';
+  const html = `
+    <div class="stat-card"><div class="sv">${ativos}</div><div class="sl">Guichês ativos</div></div>
+    <div class="stat-card"><div class="sv">${total}</div><div class="sl">Atendimentos hoje</div></div>
+    <div class="stat-card"><div class="sv">${tmedio}</div><div class="sl">Tempo médio</div></div>
+    <div class="stat-card"><div class="sv">${ausentes}</div><div class="sl">Ausentes agora</div></div>
+  `;
+  const r1 = document.getElementById('stats-row');
+  const r2 = document.getElementById('gestor-stats-row');
+  if (r1) r1.innerHTML = html;
+  if (r2) r2.innerHTML = html;
+}
+
+function renderMonitor() {
+  const mg = document.getElementById('mon-grid');
+  if (!mg) return;
+  mg.innerHTML = guiches.map(g => {
+    const isAtend = g.status === 'atendendo';
+    const isAus = g.status === 'ausente';
+    const isAtiva = g.status === 'ativa';
+    const cls = isAtend?'atendendo':isAus?'ausente':isAtiva?'ativa':'livre';
+    const sl = isAtend?'Atendendo':isAus?'Ausente':isAtiva?'Disponível':'—';
+    return `<div class="mc ${cls}">
+      <div class="mc-num">Guichê ${g.num}</div>
+      <div class="mc-indicator"></div>
+      <div class="mc-nome">${g.nome||'—'}</div>
+      <div class="mc-status">${sl}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderGestor() {
+  const maxA = Math.max(...guiches.map(g=>g.totalAtendimentos), 1);
+  const gt = document.getElementById('gestor-table');
+  if (!gt) return;
+  gt.innerHTML = `<thead><tr>
+    <th>Guichê</th><th>Funcionária</th><th>Status</th>
+    <th>Atendimentos</th><th>Tempo médio</th><th>Ociosidade</th><th>Ausência</th>
+  </tr></thead><tbody>` + guiches.map(g => {
+    const tm = g.totalAtendimentos > 0 ? fmtSeg(Math.round(g.totalTempoAtend/g.totalAtendimentos)) : '—';
+    const pct = Math.round((g.totalAtendimentos/maxA)*100);
+    const sb = g.status==='livre'?'badge-livre':g.status==='ausente'?'badge-ausente':g.status==='atendendo'?'badge-atendendo':'badge-ativa';
+    const sl = g.status==='livre'?'Livre':g.status==='ausente'?'Ausente':g.status==='atendendo'?'Atendendo':'Disponível';
+    return `<tr>
+      <td>G${g.num}</td>
+      <td>${g.nome||'—'}</td>
+      <td><span class="gc-badge ${sb}">${sl}</span></td>
+      <td><div class="bar-row"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div><span>${g.totalAtendimentos}</span></div></td>
+      <td>${tm}</td>
+      <td>${fmtSeg(g.totalOciosidade)}</td>
+      <td>${fmtSeg(g.totalAusencia)}</td>
+    </tr>`;
+  }).join('') + '</tbody>';
+  const lb = document.getElementById('log-box');
+  if (lb) lb.innerHTML = eventos.length
+    ? eventos.map(e=>`<div class="log-item"><span class="log-ts">${e.t}</span><span>${e.msg}</span></div>`).join('')
+    : '<div class="empty">Nenhum evento ainda</div>';
+}
+
+function renderRelatorio() {
+  const fg = document.getElementById('rel-g')?.value || 'todos';
+  const ft = document.getElementById('rel-t')?.value || 'todos';
+  let hist = [...historico];
+  if (fg !== 'todos') hist = hist.filter(h => h.guiche === parseInt(fg));
+  if (ft !== 'todos') hist = hist.filter(h => h.turno === ft);
+
+  const por = {};
+  hist.forEach(h => {
+    if (!por[h.nome]) por[h.nome] = {nome:h.nome, guiche:h.guiche, atend:0, total:0};
+    por[h.nome].atend++; por[h.nome].total += h.duracao;
+  });
+  const resumo = Object.values(por);
+
+  const rr = document.getElementById('rel-resumo');
+  if (rr) rr.innerHTML = `<thead><tr><th>Funcionária</th><th>Guichê</th><th>Atendimentos</th><th>Tempo total</th><th>Tempo médio</th></tr></thead><tbody>` +
+    (resumo.length ? resumo.map(r=>`<tr><td>${r.nome}</td><td>G${r.guiche}</td><td>${r.atend}</td><td>${fmtSeg(r.total)}</td><td>${fmtSeg(Math.round(r.total/r.atend))}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="empty">Nenhum atendimento registrado</td></tr>') + '</tbody>';
+
+  const rd = document.getElementById('rel-detalhe');
+  if (rd) rd.innerHTML = `<thead><tr><th>Guichê</th><th>Funcionária</th><th>Turno</th><th>Início</th><th>Fim</th><th>Duração</th></tr></thead><tbody>` +
+    (hist.length ? [...hist].reverse().map(h=>`<tr><td>G${h.guiche}</td><td>${h.nome}</td><td>${h.turno}</td><td>${h.inicio}</td><td>${h.fim}</td><td>${fmtSeg(h.duracao)}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="empty">Nenhum registro ainda</td></tr>') + '</tbody>';
+}
+
+// ─── EXPORTS ─────────────────────────────────────────────
+window.exportCSV = function() {
+  if (!historico.length) { alert('Nenhum atendimento registrado ainda.'); return; }
+  const header = ['Guichê','Funcionária','Turno','Início','Fim','Duração (s)'];
+  const rows = historico.map(r => [`G${r.guiche}`, r.nome, r.turno, r.inicio, r.fim, r.duracao]);
+  const csv = '\uFEFF' + [header,...rows].map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `ceo-atendimento-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+  a.click();
+};
+
+window.exportPDF = function() {
+  if (!historico.length) { alert('Nenhum atendimento registrado ainda.'); return; }
+  const data = new Date().toLocaleDateString('pt-BR');
+  const por = {};
+  historico.forEach(h => {
+    if (!por[h.nome]) por[h.nome]={nome:h.nome,guiche:h.guiche,atend:0,total:0};
+    por[h.nome].atend++; por[h.nome].total+=h.duracao;
+  });
+  let html = `<html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;font-size:12px;padding:24px;color:#1a2e1e}
+    h1{font-size:18px;color:#2d6a4f;margin-bottom:2px}
+    h2{font-size:13px;color:#2d6a4f;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em}
+    .sub{font-size:11px;color:#6b8f72;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px}
+    th{background:#f0faf2;color:#2d6a4f;padding:6px 10px;text-align:left;font-size:11px;border:1px solid #c8e6cd}
+    td{padding:6px 10px;border:1px solid #e2f0e4;font-size:11px}
+    tr:nth-child(even) td{background:#f8fdf9}
+    .footer{margin-top:24px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:8px}
+  </style></head><body>
+  <h1>CEO Salvador Shopping</h1>
+  <div class="sub">Relatório de Atendimento — ${data} — Corporate Executive Offices</div>
+  <h2>Resumo por funcionária</h2>
+  <table><tr><th>Funcionária</th><th>Guichê</th><th>Atendimentos</th><th>Tempo total</th><th>Tempo médio</th></tr>`;
+  Object.values(por).forEach(r => {
+    html += `<tr><td>${r.nome}</td><td>G${r.guiche}</td><td>${r.atend}</td><td>${fmtSeg(r.total)}</td><td>${fmtSeg(Math.round(r.total/r.atend))}</td></tr>`;
+  });
+  html += `</table><h2>Histórico detalhado</h2>
+  <table><tr><th>Guichê</th><th>Funcionária</th><th>Turno</th><th>Início</th><th>Fim</th><th>Duração</th></tr>`;
+  [...historico].reverse().forEach(h => {
+    html += `<tr><td>G${h.guiche}</td><td>${h.nome}</td><td>${h.turno}</td><td>${h.inicio}</td><td>${h.fim}</td><td>${fmtSeg(h.duracao)}</td></tr>`;
+  });
+  html += `</table><div class="footer">Gerado em ${new Date().toLocaleString('pt-BR')} · CEO Salvador Shopping · Gestão de Atendimento</div></body></html>`;
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(), 600);
+};
+
+// ─── TABS ────────────────────────────────────────────────
+window.showTab = function(name, el) {
+  ['checkin','monitor','gestor','relatorio'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if (name==='relatorio') renderRelatorio();
+  if (name==='gestor') renderGestor();
+};
+
+// ─── CLOCK ───────────────────────────────────────────────
+function updateClocks() {
+  const t = new Date().toLocaleTimeString('pt-BR');
+  const hc = document.getElementById('header-clock');
+  const mc = document.getElementById('mon-clock');
+  if (hc) hc.textContent = t;
+  if (mc) mc.textContent = t;
+}
+
+// ─── INIT ────────────────────────────────────────────────
+function render() {
+  renderStats();
+  renderCheckin();
+  renderMonitor();
+  const tabG = document.getElementById('tab-gestor');
+  if (tabG && tabG.style.display !== 'none') renderGestor();
+}
+
+setInterval(() => { updateClocks(); renderCheckin(); renderMonitor(); }, 1000);
+updateClocks();
+
+setTimeout(() => {
+  const lo = document.getElementById('loading');
+  lo.style.opacity = '0';
+  setTimeout(() => lo.style.display = 'none', 500);
+}, 1800);
+
+</script>
+</body>
+</html>
