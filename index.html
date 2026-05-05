@@ -583,23 +583,61 @@
   <span id="fb-txt">Conectando...</span>
 </div>
 
-<!-- FIREBASE SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<script>
+// ─── FIREBASE REST API (sem SDK externo) ─────────────────
+const FB_URL = 'https://ceo-fila-default-rtdb.firebaseio.com';
+const FB_KEY = 'AIzaSyAD8LmQHuPrSD0Dr6W1XMp8-8AFpHKgluM';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAD8LmQHuPrSD0Dr6W1XMp8-8AFpHKgluM",
-  authDomain: "ceo-fila.firebaseapp.com",
-  databaseURL: "https://ceo-fila-default-rtdb.firebaseio.com",
-  projectId: "ceo-fila",
-  storageBucket: "ceo-fila.firebasestorage.app",
-  messagingSenderId: "463798623074",
-  appId: "1:463798623074:web:2913157a86887c78e0ea3b"
-};
+async function fbSet(path, data) {
+  try {
+    await fetch(`${FB_URL}/${path}.json?auth=${FB_KEY}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.error('fbSet erro:', e); }
+}
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+async function fbGet() {
+  try {
+    const r = await fetch(`${FB_URL}/.json?auth=${FB_KEY}`);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// Polling a cada 2 segundos (substitui onValue)
+let ultimoEtag = null;
+async function fbPoll() {
+  try {
+    const r = await fetch(`${FB_URL}/.json?auth=${FB_KEY}`);
+    const etag = r.headers.get('etag') || '';
+    const data = await r.json();
+    if (!data) { render(); setFbStatus('ok'); return; }
+    // Salva inputs em digitação
+    const inputsAtivos = {};
+    document.querySelectorAll('.gc-input').forEach(el => { if (el.value) inputsAtivos[el.id] = el.value; });
+    if (data.guiches) guiches = data.guiches.map((g,i) => g ? g : guiches[i]);
+    if (data.historico) historico = Array.isArray(data.historico) ? data.historico : Object.values(data.historico);
+    if (data.eventos) eventos = Array.isArray(data.eventos) ? data.eventos : Object.values(data.eventos);
+    render();
+    Object.entries(inputsAtivos).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+    setFbStatus('ok');
+  } catch(e) { setFbStatus('err'); }
+}
+
+function setFbStatus(s) {
+  document.getElementById('fb-dot').className = 'fb-dot ' + s;
+  document.getElementById('fb-txt').textContent = s === 'ok' ? 'Sincronizado' : 'Erro de conexão';
+}
+
+function salvar() {
+  fbSet('guiches', guiches.map(g => ({...g})));
+  fbSet('historico', historico.length ? historico : []);
+  fbSet('eventos', eventos.length ? eventos.slice(0,50) : []);
+}
+
+setInterval(fbPoll, 2000);
+fbPoll();
 
 // ─── STATE ───────────────────────────────────────────────
 const TURNO = () => new Date().getHours() < 12 ? 'Manhã' : 'Tarde';
@@ -611,54 +649,15 @@ const fmtSeg = s => {
 };
 
 let guiches = Array.from({length:6},(_,i) => ({
-  num: i+1,
-  status: 'livre',
-  nome: '',
-  checkinTs: null,
-  atendimentoStart: null,
-  ultimoFimAtendimento: null,
-  ausenciaStart: null,
-  totalAtendimentos: 0,
-  totalTempoAtend: 0,
-  totalOciosidade: 0,
-  totalAusencia: 0,
+  num: i+1, status: 'livre', nome: '',
+  checkinTs: null, atendimentoStart: null,
+  ultimoFimAtendimento: null, ausenciaStart: null,
+  totalAtendimentos: 0, totalTempoAtend: 0,
+  totalOciosidade: 0, totalAusencia: 0,
 }));
 
 let historico = [];
 let eventos = [];
-
-// ─── FIREBASE SYNC ───────────────────────────────────────
-function salvar() {
-  set(ref(db, 'guiches'), guiches.map(g => ({...g})));
-  set(ref(db, 'historico'), historico.length ? historico : []);
-  set(ref(db, 'eventos'), eventos.length ? eventos.slice(0,50) : []);
-}
-
-onValue(ref(db, '/'), snap => {
-  const data = snap.val();
-  if (!data) return;
-  // Salva valores dos inputs antes de atualizar estado
-  const inputsAtivos = {};
-  document.querySelectorAll('.gc-input').forEach(el => {
-    if (el.value) inputsAtivos[el.id] = el.value;
-  });
-  if (data.guiches) {
-    guiches = data.guiches.map((g,i) => g || guiches[i]);
-  }
-  if (data.historico) historico = data.historico;
-  if (data.eventos) eventos = data.eventos;
-  render();
-  // Restaura valores dos inputs após re-render
-  Object.entries(inputsAtivos).forEach(([id, val]) => {
-    const el = document.getElementById(id);
-    if (el) { el.value = val; el.focus(); }
-  });
-  document.getElementById('fb-dot').className = 'fb-dot ok';
-  document.getElementById('fb-txt').textContent = 'Sincronizado';
-}, err => {
-  document.getElementById('fb-dot').className = 'fb-dot err';
-  document.getElementById('fb-txt').textContent = 'Erro de conexão';
-});
 
 // ─── AÇÕES ───────────────────────────────────────────────
 window.checkin = function(i) {
@@ -745,45 +744,81 @@ function addEvento(msg) {
 }
 
 // ─── RENDER ──────────────────────────────────────────────
+// Renderiza estrutura completa do card — chamado só quando status muda
+function renderCardCompleto(g, i) {
+  const isLivre = g.status === 'livre';
+  const isAtiva = g.status === 'ativa';
+  const isAtend = g.status === 'atendendo';
+  const isAus = g.status === 'ausente';
+  const badgeCls = isLivre?'badge-livre':isAtend?'badge-atendendo':isAus?'badge-ausente':'badge-ativa';
+  const badgeTxt = isLivre?'Livre':isAtend?'Atendendo':isAus?'Ausente':'Disponível';
+  const tmedio = g.totalAtendimentos > 0 ? fmtSeg(Math.round(g.totalTempoAtend/g.totalAtendimentos)) : '—';
+  return `<div class="gcard status-${isAtend?'atendendo':isAus?'ausente':isAtiva?'ativa':'livre'}" id="gcard-${i}" data-status="${g.status}">
+    <div class="gc-header">
+      <div class="gc-num">Guichê ${g.num}</div>
+      <span class="gc-badge ${badgeCls}" id="gbadge-${i}">${badgeTxt}</span>
+    </div>
+    <div class="gc-nome" id="gnome-${i}">${g.nome || '—'}</div>
+    <div class="gc-info" id="ginfo-${i}"></div>
+    <div class="gc-stats">
+      <div class="gc-stat"><strong id="gat-${i}">${g.totalAtendimentos}</strong>atend. hoje</div>
+      <div class="gc-stat"><strong id="gtm-${i}">${tmedio}</strong>tempo médio</div>
+      <div class="gc-stat"><strong id="goc-${i}">${fmtSeg(g.totalOciosidade)}</strong>ociosidade</div>
+    </div>
+    <div class="gc-btns" id="gbtns-${i}">
+      ${isLivre ? `<input type="text" class="gc-input" id="inp-${i}" placeholder="Nome da funcionária" onkeydown="if(event.key==='Enter')checkin(${i})">
+        <button class="btn btn-verde" onclick="checkin(${i})">Check-in</button>` : ''}
+      ${isAtiva ? `<button class="btn btn-verde" onclick="iniciarAtend(${i})">Iniciar atend.</button>
+        <button class="btn btn-amarelo" onclick="toggleAusente(${i})">Ausente</button>
+        <button class="btn btn-vermelho" onclick="checkout(${i})">Checkout</button>` : ''}
+      ${isAtend ? `<button class="btn btn-verde" onclick="finalizarAtend(${i})">✓ Finalizar</button>` : ''}
+      ${isAus ? `<button class="btn btn-amarelo" onclick="toggleAusente(${i})">Voltei</button>` : ''}
+    </div>
+  </div>`;
+}
+
 function renderCheckin() {
-  const now = Date.now();
   const el = document.getElementById('checkin-grid');
   if (!el) return;
-  el.innerHTML = guiches.map((g, i) => {
-    const isLivre = g.status === 'livre';
-    const isAtiva = g.status === 'ativa';
-    const isAtend = g.status === 'atendendo';
-    const isAus = g.status === 'ausente';
-    let timerTxt = '';
-    if (isAtend && g.atendimentoStart) timerTxt = 'Atendendo há ' + fmtSeg(Math.round((now - g.atendimentoStart)/1000));
-    else if (isAus && g.ausenciaStart) timerTxt = 'Ausente há ' + fmtSeg(Math.round((now - g.ausenciaStart)/1000));
-    else if ((isAtiva) && g.ultimoFimAtendimento) timerTxt = 'Ocioso há ' + fmtSeg(Math.round((now - g.ultimoFimAtendimento)/1000));
-    const badgeCls = isLivre?'badge-livre':isAtend?'badge-atendendo':isAus?'badge-ausente':'badge-ativa';
-    const badgeTxt = isLivre?'Livre':isAtend?'Atendendo':isAus?'Ausente':'Disponível';
-    const tmedio = g.totalAtendimentos > 0 ? fmtSeg(Math.round(g.totalTempoAtend/g.totalAtendimentos)) : '—';
-    return `<div class="gcard status-${isAtend?'atendendo':isAus?'ausente':isAtiva?'ativa':'livre'}">
-      <div class="gc-header">
-        <div class="gc-num">Guichê ${g.num}</div>
-        <span class="gc-badge ${badgeCls}">${badgeTxt}</span>
-      </div>
-      <div class="gc-nome">${g.nome || '—'}</div>
-      <div class="gc-info">${timerTxt}</div>
-      <div class="gc-stats">
-        <div class="gc-stat"><strong>${g.totalAtendimentos}</strong>atend. hoje</div>
-        <div class="gc-stat"><strong>${tmedio}</strong>tempo médio</div>
-        <div class="gc-stat"><strong>${fmtSeg(g.totalOciosidade)}</strong>ociosidade</div>
-      </div>
-      <div class="gc-btns">
-        ${isLivre ? `<input type="text" class="gc-input" id="inp-${i}" placeholder="Nome da funcionária" onkeydown="if(event.key==='Enter')checkin(${i})">
-          <button class="btn btn-verde" onclick="checkin(${i})">Check-in</button>` : ''}
-        ${isAtiva ? `<button class="btn btn-verde" onclick="iniciarAtend(${i})">Iniciar atend.</button>
-          <button class="btn btn-amarelo" onclick="toggleAusente(${i})">Ausente</button>
-          <button class="btn btn-vermelho" onclick="checkout(${i})">Checkout</button>` : ''}
-        ${isAtend ? `<button class="btn btn-verde" onclick="finalizarAtend(${i})">✓ Finalizar</button>` : ''}
-        ${isAus ? `<button class="btn btn-amarelo" onclick="toggleAusente(${i})">Voltei</button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+  guiches.forEach((g, i) => {
+    const existente = document.getElementById('gcard-'+i);
+    // Cria card do zero se não existe ou se status mudou
+    if (!existente || existente.dataset.status !== g.status) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderCardCompleto(g, i);
+      if (!existente) {
+        el.appendChild(tmp.firstElementChild);
+      } else {
+        el.replaceChild(tmp.firstElementChild, existente);
+      }
+    } else {
+      // Só atualiza campos que mudam frequentemente, sem mexer no input
+      const tmedio = g.totalAtendimentos > 0 ? fmtSeg(Math.round(g.totalTempoAtend/g.totalAtendimentos)) : '—';
+      const atEl = document.getElementById('gat-'+i);
+      const tmEl = document.getElementById('gtm-'+i);
+      const ocEl = document.getElementById('goc-'+i);
+      const nmEl = document.getElementById('gnome-'+i);
+      if (atEl) atEl.textContent = g.totalAtendimentos;
+      if (tmEl) tmEl.textContent = tmedio;
+      if (ocEl) ocEl.textContent = fmtSeg(g.totalOciosidade);
+      if (nmEl && g.nome) nmEl.textContent = g.nome;
+    }
+  });
+  updateTimers();
+}
+
+// Atualiza só os timers — sem tocar em nada mais
+function updateTimers() {
+  const now = Date.now();
+  guiches.forEach((g, i) => {
+    const el = document.getElementById('ginfo-'+i);
+    if (!el) return;
+    let txt = '';
+    if (g.status === 'atendendo' && g.atendimentoStart) txt = 'Atendendo há ' + fmtSeg(Math.round((now - g.atendimentoStart)/1000));
+    else if (g.status === 'ausente' && g.ausenciaStart) txt = 'Ausente há ' + fmtSeg(Math.round((now - g.ausenciaStart)/1000));
+    else if (g.status === 'ativa' && g.ultimoFimAtendimento) txt = 'Ocioso há ' + fmtSeg(Math.round((now - g.ultimoFimAtendimento)/1000));
+    el.textContent = txt;
+  });
 }
 
 function renderStats() {
@@ -954,7 +989,7 @@ function render() {
   if (tabG && tabG.style.display !== 'none') renderGestor();
 }
 
-setInterval(() => { updateClocks(); renderCheckin(); renderMonitor(); }, 1000);
+setInterval(() => { updateClocks(); updateTimers(); renderMonitor(); }, 1000);
 updateClocks();
 
 setTimeout(() => {
