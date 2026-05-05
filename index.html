@@ -637,12 +637,22 @@ function salvar() {
 onValue(ref(db, '/'), snap => {
   const data = snap.val();
   if (!data) return;
+  // Salva valores dos inputs antes de atualizar estado
+  const inputsAtivos = {};
+  document.querySelectorAll('.gc-input').forEach(el => {
+    if (el.value) inputsAtivos[el.id] = el.value;
+  });
   if (data.guiches) {
     guiches = data.guiches.map((g,i) => g || guiches[i]);
   }
   if (data.historico) historico = data.historico;
   if (data.eventos) eventos = data.eventos;
   render();
+  // Restaura valores dos inputs após re-render
+  Object.entries(inputsAtivos).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) { el.value = val; el.focus(); }
+  });
   document.getElementById('fb-dot').className = 'fb-dot ok';
   document.getElementById('fb-txt').textContent = 'Sincronizado';
 }, err => {
