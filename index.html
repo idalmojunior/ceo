@@ -245,81 +245,142 @@
   .mon-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    gap: 20px;
     margin-bottom: 1.5rem;
+    flex: 1;
   }
   .mc {
-    border-radius: 12px;
-    padding: 1.5rem 1rem;
+    border-radius: 16px;
+    padding: 2.5rem 1rem;
     text-align: center;
     transition: all .5s;
     position: relative;
     overflow: hidden;
   }
   .mc.livre { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
-  .mc.ativa { background: rgba(45,106,79,.2); border: 1.5px solid rgba(64,145,108,.5); }
-  .mc.atendendo { background: rgba(45,106,79,.3); border: 1.5px solid rgba(116,198,157,.6); }
-  .mc.ausente { background: rgba(233,196,106,.08); border: 1.5px solid rgba(233,196,106,.3); }
+  .mc.ativa { background: rgba(45,106,79,.2); border: 2px solid rgba(64,145,108,.6); }
+  .mc.atendendo { background: rgba(180,30,30,.25); border: 2px solid rgba(220,60,60,.7); }
+  .mc.ausente { background: rgba(233,196,106,.08); border: 2px solid rgba(233,196,106,.4); }
 
   .mc-num {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: .15em;
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
   }
   .mc.livre .mc-num { color: rgba(255,255,255,.2); }
-  .mc.ativa .mc-num, .mc.atendendo .mc-num { color: rgba(116,198,157,.7); }
+  .mc.ativa .mc-num { color: rgba(116,198,157,.7); }
+  .mc.atendendo .mc-num { color: rgba(255,130,130,.7); }
   .mc.ausente .mc-num { color: rgba(233,196,106,.6); }
 
   .mc-indicator {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    margin: 0 auto 10px;
+    margin: 0 auto 14px;
   }
   .mc.livre .mc-indicator { background: rgba(255,255,255,.12); }
   .mc.ativa .mc-indicator { background: var(--verde-claro); animation: pulse 2s infinite; }
-  .mc.atendendo .mc-indicator { background: var(--verde-claro); }
+  .mc.atendendo .mc-indicator { background: #ff6b6b; animation: pulse-red 1.2s infinite; }
   .mc.ausente .mc-indicator { background: var(--amarelo); animation: pulse 1.5s infinite; }
 
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+  @keyframes pulse-red { 0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(255,107,107,.4)} 50%{opacity:.8;transform:scale(.9);box-shadow:0 0 0 8px rgba(255,107,107,0)} }
 
   .mc-nome {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    min-height: 22px;
+    font-size: 26px;
+    font-weight: 700;
+    min-height: 32px;
     letter-spacing: .02em;
   }
   .mc.livre .mc-nome { color: rgba(255,255,255,.2); }
-  .mc.ativa .mc-nome, .mc.atendendo .mc-nome { color: #fff; }
+  .mc.ativa .mc-nome { color: #fff; }
+  .mc.atendendo .mc-nome { color: #fff; }
   .mc.ausente .mc-nome { color: rgba(233,196,106,.9); }
 
   .mc-status {
-    font-size: 12px;
-    margin-top: 4px;
+    font-size: 15px;
+    margin-top: 8px;
     font-family: 'Barlow Condensed', sans-serif;
-    letter-spacing: .06em;
+    letter-spacing: .1em;
     text-transform: uppercase;
-    font-weight: 500;
+    font-weight: 600;
   }
   .mc.livre .mc-status { color: rgba(255,255,255,.18); }
-  .mc.ativa .mc-status { color: rgba(116,198,157,.8); }
-  .mc.atendendo .mc-status { color: var(--verde-claro); }
-  .mc.ausente .mc-status { color: rgba(233,196,106,.7); }
+  .mc.ativa .mc-status { color: rgba(116,198,157,.9); }
+  .mc.atendendo .mc-status { color: #ff9a9a; }
+  .mc.ausente .mc-status { color: rgba(233,196,106,.8); }
 
   .mon-rodape {
     border-top: 1px solid rgba(255,255,255,.06);
     padding-top: 1rem;
     text-align: center;
-    font-size: 12px;
+    font-size: 13px;
     color: rgba(255,255,255,.2);
     letter-spacing: .08em;
     text-transform: uppercase;
     font-family: 'Barlow Condensed', sans-serif;
   }
+
+  /* MONITOR FULLSCREEN */
+  .monitor-wrap {
+    background: #07111f;
+    border-radius: 16px;
+    padding: 2.5rem;
+    min-height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+  }
+  .monitor-wrap .mon-grid { flex: 1; }
+  .mon-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .mon-sub { font-size: 18px; color: rgba(255,255,255,.35); margin-top: 8px; letter-spacing: .06em; }
+  .mon-clock-big {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    color: var(--verde-claro);
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .12em;
+  }
+  .mon-header { text-align: center; margin-bottom: 2.5rem; }
+  .mon-logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(116,198,157,.5);
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .btn-fullscreen {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 8px;
+    color: rgba(255,255,255,.5);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    cursor: pointer;
+    letter-spacing: .06em;
+    transition: all .2s;
+    z-index: 10;
+  }
+  .btn-fullscreen:hover { background: rgba(255,255,255,.15); color: #fff; }
+  .monitor-container { position: relative; }
 
   /* GESTOR */
   .gtable-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
@@ -528,16 +589,19 @@
 </div>
 
 <!-- MONITOR -->
-<div id="tab-monitor" class="content" style="display:none">
-  <div class="monitor-wrap">
-    <div class="mon-header">
-      <div class="mon-logo-text">CEO Salvador Shopping</div>
-      <div class="mon-title">Atendimento</div>
-      <div class="mon-sub">Dirija-se ao guichê disponível</div>
-      <div class="mon-clock-big" id="mon-clock">--:--:--</div>
+<div id="tab-monitor" class="content" style="display:none;padding:1rem 2rem">
+  <div class="monitor-container" id="monitor-container">
+    <button class="btn-fullscreen" onclick="toggleFullscreen()">⛶ Tela cheia</button>
+    <div class="monitor-wrap" id="monitor-wrap">
+      <div class="mon-header">
+        <div class="mon-logo-text">CEO Salvador Shopping</div>
+        <div class="mon-title">Atendimento</div>
+        <div class="mon-sub">Dirija-se ao guichê disponível</div>
+        <div class="mon-clock-big" id="mon-clock">--:--:--</div>
+      </div>
+      <div class="mon-grid" id="mon-grid"></div>
+      <div class="mon-rodape">Corporate Executive Offices · CEO Salvador Shopping</div>
     </div>
-    <div class="mon-grid" id="mon-grid"></div>
-    <div class="mon-rodape">Corporate Executive Offices · CEO Salvador Shopping</div>
   </div>
 </div>
 
@@ -959,6 +1023,35 @@ window.exportPDF = function() {
   w.document.close();
   setTimeout(()=>w.print(), 600);
 };
+
+// ─── FULLSCREEN ──────────────────────────────────────────
+window.toggleFullscreen = function() {
+  const el = document.getElementById('monitor-container');
+  if (!document.fullscreenElement) {
+    el.requestFullscreen().then(() => {
+      // Em tela cheia: esconde header/tabs, fundo preto
+      el.style.background = '#07111f';
+      el.style.padding = '0';
+      const wrap = document.getElementById('monitor-wrap');
+      wrap.style.borderRadius = '0';
+      wrap.style.minHeight = '100vh';
+      document.querySelector('.btn-fullscreen').textContent = '✕ Sair da tela cheia';
+    }).catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+};
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {
+    const el = document.getElementById('monitor-container');
+    el.style.background = '';
+    el.style.padding = '';
+    const wrap = document.getElementById('monitor-wrap');
+    if (wrap) { wrap.style.borderRadius = ''; wrap.style.minHeight = ''; }
+    const btn = document.querySelector('.btn-fullscreen');
+    if (btn) btn.textContent = '⛶ Tela cheia';
+  }
+});
 
 // ─── TABS ────────────────────────────────────────────────
 window.showTab = function(name, el) {
