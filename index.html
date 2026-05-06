@@ -592,6 +592,7 @@
 <div id="tab-monitor" class="content" style="display:none;padding:1rem 2rem">
   <div class="monitor-container" id="monitor-container">
     <button class="btn-fullscreen" onclick="toggleFullscreen()">⛶ Tela cheia</button>
+    <button class="btn-fullscreen" style="right:130px" onclick="toggleVoz(this)">🔊 Som ativo</button>
     <div class="monitor-wrap" id="monitor-wrap">
       <div class="mon-header">
         <div class="mon-logo-text">CEO Salvador Shopping</div>
@@ -680,7 +681,11 @@ async function fbPoll() {
     // Salva inputs em digitação
     const inputsAtivos = {};
     document.querySelectorAll('.gc-input').forEach(el => { if (el.value) inputsAtivos[el.id] = el.value; });
-    if (data.guiches) guiches = data.guiches.map((g,i) => g ? g : guiches[i]);
+    if (data.guiches) {
+      const novos = data.guiches.map((g,i) => g ? g : guiches[i]);
+      detectarMudancasVoz(novos);
+      guiches = novos;
+    }
     if (data.historico) historico = Array.isArray(data.historico) ? data.historico : Object.values(data.historico);
     if (data.eventos) eventos = Array.isArray(data.eventos) ? data.eventos : Object.values(data.eventos);
     render();
@@ -703,7 +708,43 @@ function salvar() {
 setInterval(fbPoll, 2000);
 fbPoll();
 
-// ─── STATE ───────────────────────────────────────────────
+// ─── VOZ ─────────────────────────────────────────────────
+let vozAtiva = true;
+let statusAnterior = Array(6).fill('livre');
+
+function falar(texto) {
+  if (!vozAtiva) return;
+  if (!window.speechSynthesis) return;
+  // Cancela fala anterior para não empilhar
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = 'pt-BR';
+  u.rate = 0.92;
+  u.pitch = 1.0;
+  u.volume = 1.0;
+  // Tenta usar voz pt-BR se disponível
+  const vozes = window.speechSynthesis.getVoices();
+  const vozBR = vozes.find(v => v.lang === 'pt-BR') || vozes.find(v => v.lang.startsWith('pt'));
+  if (vozBR) u.voice = vozBR;
+  window.speechSynthesis.speak(u);
+}
+
+function detectarMudancasVoz(novosGuiches) {
+  novosGuiches.forEach((g, i) => {
+    const anterior = statusAnterior[i];
+    const atual = g.status;
+    if (anterior === atual) return;
+    // Só fala quando fica disponível (ativa) vindo de atendimento ou ausência
+    if (atual === 'ativa' && (anterior === 'atendendo' || anterior === 'ausente' || anterior === 'livre')) {
+      setTimeout(() => falar(`Guichê ${g.num}, disponível`), 300);
+    }
+    // Fala quando inicia atendimento
+    if (atual === 'atendendo' && anterior === 'ativa') {
+      setTimeout(() => falar(`Guichê ${g.num}, em atendimento`), 300);
+    }
+  });
+  statusAnterior = novosGuiches.map(g => g.status);
+}
 const TURNO = () => new Date().getHours() < 12 ? 'Manhã' : 'Tarde';
 const TS = () => new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 const fmtSeg = s => {
@@ -1025,6 +1066,20 @@ window.exportPDF = function() {
 };
 
 // ─── FULLSCREEN ──────────────────────────────────────────
+window.toggleVoz = function(btn) {
+  vozAtiva = !vozAtiva;
+  btn.textContent = vozAtiva ? '🔊 Som ativo' : '🔇 Som mudo';
+  btn.style.opacity = vozAtiva ? '1' : '0.5';
+  if (vozAtiva) falar('Som ativado');
+};
+
+// Pré-carrega vozes (alguns browsers exigem isso)
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener('voiceschanged', () => {
+    window.speechSynthesis.getVoices();
+  });
+}
 window.toggleFullscreen = function() {
   const el = document.getElementById('monitor-container');
   if (!document.fullscreenElement) {
